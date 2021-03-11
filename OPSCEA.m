@@ -35,8 +35,8 @@ function OPSCEA(pt,sz,showlabels,jumpto)
 if ~exist('showlabels','var')||isempty(showlabels); showlabels=true; end %default displays ICEEG and depth labels
 if ~exist('jumpto','var')||isempty(jumpto); jumpto=0; end 
 
-opsceapath=['/Users/kleentestaccount/Desktop/OPSCEA/'];   %path for parameters sheet
-opsceadatapath=[opsceapath 'OPSCEADATA/'];   %path for OPSCEA ICEEG and imaging data
+opsceapath=['/Users/emmadesopo/Box/Kleen Research/MATLAB/OPSCEArepo/OPSCEA-fork/'];   %path for parameters sheet
+opsceadatapath=['/Volumes/OPSCEA/OPSCEADATA/'];   %path for OPSCEA ICEEG and imaging data
     if ~exist(opsceadatapath,'dir'); error('Directory for your data needs to be corrected'); end
 cd(opsceapath);
 
@@ -55,12 +55,12 @@ disp(['Running ' pt ', seizure ' sz '...']);
 
 %% Import parameters
 % for specific seizure 
-[~,prm_allPtSz]=xlsread([opsceapath 'OPSCEAparams'],'params'); 
+[~,prm_allPtSz]=xlsread([opsceapath 'OPSCEAparams2.xlsx'],'params'); 
     fields_SZ=prm_allPtSz(1,:); % header for columns of seizure parameters
     prm=prm_allPtSz(strcmp(pt,prm_allPtSz(:,1))&strcmp(sz,prm_allPtSz(:,2)),:);
     if isempty(prm); error(['ATTENTION: No entry exists for ' pt ' seizure ' sz ' in the params master sheet']); end
 % Import parameters for patient's specific plot (layout of video frame)
-[~,plt]=xlsread([opsceapath 'OPSCEAparams'],pt); 
+[~,plt]=xlsread([opsceapath 'OPSCEAparams2.xlsx'],pt); 
     fields_PLOT=plt(1,:); plt(1,:)=[]; % header for columns of plotting parameters
     plottype=plt(:,strcmpi(fields_PLOT,'plottype')); %type of plot for each subplot (accepts: iceeg, surface, depth, or colorbar)
 
@@ -129,7 +129,8 @@ S.sliceplane='c'; % calculate omni-planar slice angles with respect to coronal (
 
 %% load ICEEG data, and the bad channels verified for that specific data
 load([szpath ptsz])
-load([szpath ptsz '_badch']); 
+load([szpath ptsz '_badch']);
+if exist('ppEEG','var'); d=ppEEG; clear ppEEG; sfx=fs; end
 if size(d,1)>size(d,2); d=d'; end % orient to channels by samples
 [nch,ntp]=size(d); f=1; 
 disp(['Length of data to play for video is ' num2str(round(ntp/sfx)) 'sec'])
@@ -329,6 +330,37 @@ for i=frametimpoints;
           text(mean(sliceinfo(j).corners(1,:)),mean(sliceinfo(j).corners(2,:)),axislim(5)+ttloffset,ttl,'HorizontalAlignment','center','VerticalAlignment','top','color',depthcolor{j},'fontweight','bold','fontsize',14) 
           
           colormap(gca,S.cm)
+           % add pt here to remove overlying chunk of brain
+          if  (strcmp(pt,'EC148')&&strcmpi(sliceinfo(j).depthlabels,'ins'))     ||...
+              (strcmp(pt,'EC101')&&strcmpi(sliceinfo(j).depthlabels,'aid'))     ||...
+              (strcmp(pt,'EC181')&&strcmpi(sliceinfo(j).depthlabels,'astg'))    ||...
+              (strcmp(pt,'EC186')&&strcmpi(sliceinfo(j).depthlabels,'id'))      ||...
+              (strcmp(pt,'EC71')&&strcmpi(sliceinfo(j).depthlabels,'id'))       ||...
+              (strcmp(pt,'EC92')&&strcmpi(sliceinfo(j).depthlabels,'id'))       ||...      %||(strcmp(pt,'EC999')&&strcmpi(sliceinfo(j).depthlabels,'IH-B')); 
+              (strcmp(pt,'EC162')&&strcmpi(sliceinfo(j).depthlabels,'al'))       ||...      %||(strcmp(pt,'EC999')&&strcmpi(sliceinfo(j).depthlabels,'IH-B')); 
+              (strcmp(pt,'EC210')&&strcmpi(sliceinfo(j).depthlabels,'pda'))	    ;
+              
+              g=get(gca,'Children'); delete(g(end-isL))
+              
+          % add pt here to rotate slice 180 deg
+          elseif  (strcmp(pt,'EC71')&&strcmpi(sliceinfo(j).depthlabels,'pid'))||...
+                  (strcmp(pt,'EC86')&&strcmpi(sliceinfo(j).depthlabels,'id'))||...
+                  (strcmp(pt,'EC108')&&strcmpi(sliceinfo(j).depthlabels,'id'))||...
+                  (strcmp(pt,'EC131')&&strcmpi(sliceinfo(j).depthlabels,'id'))||...
+                  (strcmp(pt,'EC153')&&strcmpi(sliceinfo(j).depthlabels,'dc')&&~strcmpi(sz,'05'))||...
+                  (strcmp(pt,'RC999')&&strcmpi(sliceinfo(j).depthlabels(1),'r'))||...
+                  (strcmp(pt,'EC91')&&strcmpi(sliceinfo(j).depthlabels,'ac'))||...
+                  (strcmp(pt,'EC178')&&strcmpi(sliceinfo(j).depthlabels(1),'L'))||...
+                  (strcmp(pt,'EC216')&&strcmpi(sliceinfo(j).depthlabels(1),'L'))||...
+                  (strcmp(pt,'EC63')&&strcmpi(sliceinfo(j).depthlabels,'id'))||...
+                  (strcmp(pt,'EC208')&&strcmpi(sliceinfo(j).depthlabels,'id'))||...
+                  (strcmp(pt,'EC220')&&strcmpi(sliceinfo(j).depthlabels(1),'R'))||...
+                  (strcmp(pt,'EC135')&&strcmpi(sliceinfo(j).depthlabels,'id'))||...
+                  (strcmp(pt,'EC233')&&strcmpi(sliceinfo(j).depthlabels,'std'))||...
+                  (strcmp(pt,'EC238')&&strcmpi(sliceinfo(j).depthlabels(1),'R'))||...
+                  (strcmp(pt,'EC239')&&strcmpi(sliceinfo(j).depthlabels(1),'R'))||...
+                  (strcmp(pt,'EC209')&&any(strcmpi(sliceinfo(j).depthlabels,{'lfa','rf'})))
+                 
 
         end
     end; pause(.5) 
